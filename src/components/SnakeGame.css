@@ -24,15 +24,54 @@
   text-transform: uppercase;
 }
 
+.top-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  max-width: min(400px, calc(100vw - 32px));
+  gap: 12px;
+}
+
 .score-board {
   font-size: 1.1rem;
   color: #bbb;
+  white-space: nowrap;
 }
 .score-board span {
   color: #fff;
   font-weight: 700;
   min-width: 3ch;
   display: inline-block;
+}
+
+/* Speed selector */
+.speed-selector {
+  display: flex;
+  gap: 4px;
+}
+
+.speed-btn {
+  padding: 4px 10px;
+  background: #16213e;
+  color: #aaa;
+  border: 1px solid #2a3a5c;
+  border-radius: 5px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+.speed-btn:hover {
+  border-color: #27ae60;
+  color: #fff;
+}
+.speed-btn.active {
+  background: #27ae60;
+  border-color: #27ae60;
+  color: #000;
 }
 
 /* Canvas */

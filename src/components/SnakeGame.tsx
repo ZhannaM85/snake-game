@@ -4,7 +4,14 @@ import './SnakeGame.css';
 const CELL = 20;
 const COLS = 20;
 const ROWS = 20;
-const TICK_MS = 150;
+
+type SpeedKey = 'slow' | 'medium' | 'fast' | 'turbo';
+const SPEEDS: Record<SpeedKey, { label: string; ms: number }> = {
+  slow:   { label: 'Slow',   ms: 300 },
+  medium: { label: 'Medium', ms: 180 },
+  fast:   { label: 'Fast',   ms: 100 },
+  turbo:  { label: 'Turbo',  ms: 55  },
+};
 
 type Dir = 'UP' | 'DOWN' | 'LEFT' | 'RIGHT';
 type Point = { x: number; y: number };
@@ -47,6 +54,7 @@ export default function SnakeGame() {
   const [score, setScore]     = useState(0);
   const [dead, setDead]       = useState(false);
   const [started, setStarted] = useState(false);
+  const [speed, setSpeed]     = useState<SpeedKey>('medium');
 
   // touch tracking
   const touchStart = useRef<{ x: number; y: number } | null>(null);
@@ -151,12 +159,12 @@ export default function SnakeGame() {
     draw();
   }, [draw]);
 
-  // game loop
+  // game loop — restarts whenever speed changes
   useEffect(() => {
     if (!started) { draw(); return; }
-    const id = setInterval(tick, TICK_MS);
+    const id = setInterval(tick, SPEEDS[speed].ms);
     return () => clearInterval(id);
-  }, [started, tick, draw]);
+  }, [started, speed, tick, draw]);
 
   // keyboard
   useEffect(() => {
@@ -207,7 +215,20 @@ export default function SnakeGame() {
   return (
     <div className="game-wrapper">
       <h1 className="game-title">Snake</h1>
-      <div className="score-board">Score: <span>{score}</span></div>
+      <div className="top-bar">
+        <div className="score-board">Score: <span>{score}</span></div>
+        <div className="speed-selector">
+          {(Object.keys(SPEEDS) as SpeedKey[]).map((key) => (
+            <button
+              key={key}
+              className={`speed-btn${speed === key ? ' active' : ''}`}
+              onClick={() => setSpeed(key)}
+            >
+              {SPEEDS[key].label}
+            </button>
+          ))}
+        </div>
+      </div>
 
       <div className="canvas-container">
         <canvas
