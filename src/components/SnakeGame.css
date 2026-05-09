@@ -29,7 +29,7 @@
   align-items: center;
   justify-content: space-between;
   width: 100%;
-  max-width: min(400px, calc(100vw - 32px));
+  max-width: min(560px, calc(100vw - 32px));
   gap: 12px;
 }
 
@@ -82,7 +82,7 @@
   overflow: hidden;
   box-shadow: 0 0 24px rgba(46, 204, 113, 0.3);
   /* scale down on small screens while keeping aspect ratio */
-  max-width: min(400px, calc(100vw - 32px));
+  max-width: min(560px, calc(100vw - 32px));
   aspect-ratio: 1;
   width: 100%;
 }
