@@ -19,13 +19,23 @@ type FruitType = 'apple' | 'orange' | 'strawberry' | 'grape' | 'watermelon' | 'l
 type Food = Point & { fruit: FruitType };
 
 const FRUITS: FruitType[] = ['apple', 'orange', 'strawberry', 'grape', 'watermelon', 'lemon'];
+const FOOD_COUNT = 3;
 
-function randomFood(snake: Point[]): Food {
+function randomFood(snake: Point[], others: Point[] = []): Food {
   let pos: Point;
   do {
     pos = { x: Math.floor(Math.random() * COLS), y: Math.floor(Math.random() * ROWS) };
-  } while (snake.some((s) => s.x === pos.x && s.y === pos.y));
+  } while (
+    snake.some((s) => s.x === pos.x && s.y === pos.y) ||
+    others.some((o) => o.x === pos.x && o.y === pos.y)
+  );
   return { ...pos, fruit: FRUITS[Math.floor(Math.random() * FRUITS.length)] };
+}
+
+function initFoods(snake: Point[]): Food[] {
+  const foods: Food[] = [];
+  for (let i = 0; i < FOOD_COUNT; i++) foods.push(randomFood(snake, foods));
+  return foods;
 }
 
 // ── fruit drawing helpers ────────────────────────────────────────────────────
@@ -203,7 +213,7 @@ export default function SnakeGame() {
   const snakeRef  = useRef<Point[]>([{ x: 10, y: 10 }]);
   const dirRef    = useRef<Dir>('RIGHT');
   const nextRef   = useRef<Dir>('RIGHT');
-  const foodRef   = useRef<Food>(randomFood(snakeRef.current));
+  const foodRef   = useRef<Food[]>(initFoods(snakeRef.current));
   const scoreRef  = useRef(0);
   const aliveRef  = useRef(true);
   const startedRef = useRef(false);
@@ -275,7 +285,7 @@ export default function SnakeGame() {
     snakeRef.current  = [{ x: 10, y: 10 }];
     dirRef.current    = 'RIGHT';
     nextRef.current   = 'RIGHT';
-    foodRef.current   = randomFood(snakeRef.current);
+    foodRef.current   = initFoods(snakeRef.current);
     scoreRef.current  = 0;
     aliveRef.current  = true;
     startedRef.current = true;
@@ -307,7 +317,7 @@ export default function SnakeGame() {
     }
 
     // food
-    drawFruit(ctx, foodRef.current);
+    foodRef.current.forEach((f) => drawFruit(ctx, f));
 
     // snake body
     const snake = snakeRef.current;
@@ -417,14 +427,17 @@ export default function SnakeGame() {
       return;
     }
 
-    const ate = head.x === foodRef.current.x && head.y === foodRef.current.y;
+    const eatenIdx = foodRef.current.findIndex((f) => f.x === head.x && f.y === head.y);
+    const ate = eatenIdx >= 0;
     const newSnake = [head, ...snakeRef.current];
     if (!ate) newSnake.pop();
 
     snakeRef.current = newSnake;
 
     if (ate) {
-      foodRef.current = randomFood(newSnake);
+      const newFoods = [...foodRef.current];
+      newFoods[eatenIdx] = randomFood(newSnake, newFoods.filter((_, i) => i !== eatenIdx));
+      foodRef.current = newFoods;
       scoreRef.current += 10;
       setScore(scoreRef.current);
       playEat();
