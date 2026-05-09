@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import './SnakeGame.css';
 
-const CELL = 28;
+const CELL = 45;
 const COLS = 20;
 const ROWS = 20;
 
