@@ -1,0 +1,147 @@
+:root {
+  --green: #2ecc71;
+  --dark: #1a1a2e;
+}
+
+.game-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 16px;
+  min-height: 100dvh;
+  background: var(--dark);
+  color: #fff;
+  font-family: 'Segoe UI', system-ui, sans-serif;
+  user-select: none;
+}
+
+.game-title {
+  margin: 0;
+  font-size: clamp(1.6rem, 5vw, 2.4rem);
+  color: var(--green);
+  letter-spacing: 4px;
+  text-transform: uppercase;
+}
+
+.score-board {
+  font-size: 1.1rem;
+  color: #bbb;
+}
+.score-board span {
+  color: #fff;
+  font-weight: 700;
+  min-width: 3ch;
+  display: inline-block;
+}
+
+/* Canvas */
+.canvas-container {
+  position: relative;
+  border: 2px solid #27ae60;
+  border-radius: 6px;
+  overflow: hidden;
+  box-shadow: 0 0 24px rgba(46, 204, 113, 0.3);
+  /* scale down on small screens while keeping aspect ratio */
+  max-width: min(400px, calc(100vw - 32px));
+  aspect-ratio: 1;
+  width: 100%;
+}
+
+.game-canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  image-rendering: pixelated;
+}
+
+/* Overlay (start / game-over) */
+.overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.72);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  cursor: pointer;
+  backdrop-filter: blur(3px);
+}
+
+.overlay p {
+  margin: 0;
+  font-size: clamp(1rem, 3vw, 1.25rem);
+  color: var(--green);
+  font-weight: 600;
+}
+.overlay .sub {
+  color: #aaa;
+  font-size: 0.9rem;
+}
+.overlay .game-over {
+  font-size: clamp(1.8rem, 6vw, 2.6rem);
+  color: #e74c3c;
+}
+.overlay .final-score {
+  color: #fff;
+  font-size: 1.2rem;
+}
+
+.restart-btn {
+  margin-top: 8px;
+  padding: 10px 28px;
+  background: var(--green);
+  color: #000;
+  border: none;
+  border-radius: 6px;
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.restart-btn:hover {
+  background: #27ae60;
+}
+
+/* D-pad */
+.dpad {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  margin-top: 8px;
+}
+
+.dpad-row {
+  display: flex;
+  gap: 48px;
+}
+
+.dpad-btn {
+  width: 52px;
+  height: 52px;
+  background: #16213e;
+  color: var(--green);
+  border: 2px solid #27ae60;
+  border-radius: 8px;
+  font-size: 1.3rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.1s, transform 0.1s;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+.dpad-btn:active {
+  background: #27ae60;
+  transform: scale(0.93);
+}
+
+/* Hide D-pad on larger screens where keyboard is available */
+@media (hover: hover) and (pointer: fine) {
+  .dpad {
+    display: none;
+  }
+}
