@@ -59,6 +59,24 @@ export default function SnakeGame() {
   // touch tracking
   const touchStart = useRef<{ x: number; y: number } | null>(null);
 
+  // audio
+  const audioCtxRef = useRef<AudioContext | null>(null);
+  const playTurn = useCallback(() => {
+    if (!audioCtxRef.current) audioCtxRef.current = new AudioContext();
+    const ac  = audioCtxRef.current;
+    const osc = ac.createOscillator();
+    const gain = ac.createGain();
+    osc.connect(gain);
+    gain.connect(ac.destination);
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(520, ac.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(260, ac.currentTime + 0.07);
+    gain.gain.setValueAtTime(0.18, ac.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ac.currentTime + 0.09);
+    osc.start(ac.currentTime);
+    osc.stop(ac.currentTime + 0.09);
+  }, []);
+
   const reset = useCallback(() => {
     snakeRef.current  = [{ x: 10, y: 10 }];
     dirRef.current    = 'RIGHT';
@@ -245,11 +263,14 @@ export default function SnakeGame() {
       if (!d) return;
       e.preventDefault();
       if (!startedRef.current) { reset(); return; }
-      if (d !== OPPOSITE[dirRef.current]) nextRef.current = d;
+      if (d !== OPPOSITE[dirRef.current] && d !== nextRef.current) {
+        nextRef.current = d;
+        playTurn();
+      }
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [reset]);
+  }, [reset, playTurn]);
 
   // touch
   const onTouchStart = (e: React.TouchEvent) => {
@@ -271,13 +292,19 @@ export default function SnakeGame() {
       d = dy > 0 ? 'DOWN' : 'UP';
     }
     if (!startedRef.current) { reset(); return; }
-    if (d !== OPPOSITE[dirRef.current]) nextRef.current = d;
+    if (d !== OPPOSITE[dirRef.current] && d !== nextRef.current) {
+      nextRef.current = d;
+      playTurn();
+    }
   };
 
   // D-pad button handler
   const press = (d: Dir) => {
     if (!startedRef.current) { reset(); return; }
-    if (d !== OPPOSITE[dirRef.current]) nextRef.current = d;
+    if (d !== OPPOSITE[dirRef.current] && d !== nextRef.current) {
+      nextRef.current = d;
+      playTurn();
+    }
   };
 
   return (
