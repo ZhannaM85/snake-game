@@ -77,6 +77,22 @@ export default function SnakeGame() {
     osc.stop(ac.currentTime + 0.09);
   }, []);
 
+  const playEat = useCallback(() => {
+    if (!audioCtxRef.current) audioCtxRef.current = new AudioContext();
+    const ac = audioCtxRef.current;
+    const osc = ac.createOscillator();
+    const gain = ac.createGain();
+    osc.connect(gain);
+    gain.connect(ac.destination);
+    osc.type = 'triangle';
+    osc.frequency.setValueAtTime(440, ac.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(880, ac.currentTime + 0.06);
+    gain.gain.setValueAtTime(0.22, ac.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ac.currentTime + 0.18);
+    osc.start(ac.currentTime);
+    osc.stop(ac.currentTime + 0.18);
+  }, []);
+
   const reset = useCallback(() => {
     snakeRef.current  = [{ x: 10, y: 10 }];
     dirRef.current    = 'RIGHT';
@@ -240,10 +256,11 @@ export default function SnakeGame() {
       foodRef.current = randomFood(newSnake);
       scoreRef.current += 10;
       setScore(scoreRef.current);
+      playEat();
     }
 
     draw();
-  }, [draw]);
+  }, [draw, playEat]);
 
   // game loop — restarts whenever speed changes
   useEffect(() => {
