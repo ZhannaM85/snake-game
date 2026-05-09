@@ -518,6 +518,12 @@ export default function SnakeGame() {
     return () => clearInterval(id);
   }, [started, paused, speed, tick, draw]);
 
+  const togglePause = useCallback(() => {
+    if (!startedRef.current || !aliveRef.current) return;
+    pausedRef.current = !pausedRef.current;
+    setPaused((p) => !p);
+  }, []);
+
   // keyboard
   useEffect(() => {
     const MAP: Record<string, Dir> = {
@@ -569,12 +575,6 @@ export default function SnakeGame() {
       playTurn();
     }
   };
-
-  const togglePause = useCallback(() => {
-    if (!startedRef.current || !aliveRef.current) return;
-    pausedRef.current = !pausedRef.current;
-    setPaused((p) => !p);
-  }, []);
 
   // D-pad button handler
   const press = (d: Dir) => {
