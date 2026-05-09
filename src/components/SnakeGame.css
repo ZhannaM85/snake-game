@@ -118,6 +118,10 @@
   color: #aaa;
   font-size: 0.9rem;
 }
+.overlay .pause-title {
+  font-size: clamp(1.8rem, 6vw, 2.6rem);
+  color: #fdcb6e;
+}
 .overlay .game-over {
   font-size: clamp(1.8rem, 6vw, 2.6rem);
   color: #e74c3c;

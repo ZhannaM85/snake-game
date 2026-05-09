@@ -221,7 +221,10 @@ export default function SnakeGame() {
   const [score, setScore]     = useState(0);
   const [dead, setDead]       = useState(false);
   const [started, setStarted] = useState(false);
+  const [paused, setPaused]   = useState(false);
   const [speed, setSpeed]     = useState<SpeedKey>('medium');
+
+  const pausedRef = useRef(false);
 
   // touch tracking
   const touchStart = useRef<{ x: number; y: number } | null>(null);
@@ -289,9 +292,11 @@ export default function SnakeGame() {
     scoreRef.current  = 0;
     aliveRef.current  = true;
     startedRef.current = true;
+    pausedRef.current = false;
     setScore(0);
     setDead(false);
     setStarted(true);
+    setPaused(false);
   }, []);
 
   // draw a single frame
@@ -446,12 +451,12 @@ export default function SnakeGame() {
     draw();
   }, [draw, playEat, playGameOver]);
 
-  // game loop — restarts whenever speed changes
+  // game loop — restarts whenever speed or pause changes
   useEffect(() => {
-    if (!started) { draw(); return; }
+    if (!started || paused) { draw(); return; }
     const id = setInterval(tick, SPEEDS[speed].ms);
     return () => clearInterval(id);
-  }, [started, speed, tick, draw]);
+  }, [started, paused, speed, tick, draw]);
 
   // keyboard
   useEffect(() => {
@@ -460,10 +465,18 @@ export default function SnakeGame() {
       w: 'UP', s: 'DOWN', a: 'LEFT', d: 'RIGHT',
     };
     const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        if (!startedRef.current || !aliveRef.current) return;
+        pausedRef.current = !pausedRef.current;
+        setPaused((p) => !p);
+        return;
+      }
       const d = MAP[e.key];
       if (!d) return;
       e.preventDefault();
       if (!startedRef.current) { reset(); return; }
+      if (pausedRef.current) return;
       if (d !== OPPOSITE[dirRef.current] && d !== nextRef.current) {
         nextRef.current = d;
         playTurn();
@@ -539,6 +552,12 @@ export default function SnakeGame() {
           <div className="overlay" onClick={reset}>
             <p>Tap or press any arrow key</p>
             <p className="sub">to start</p>
+          </div>
+        )}
+        {paused && !dead && (
+          <div className="overlay" onClick={() => { pausedRef.current = false; setPaused(false); }}>
+            <p className="pause-title">Paused</p>
+            <p className="sub">Press ESC or tap to resume</p>
           </div>
         )}
         {dead && (
