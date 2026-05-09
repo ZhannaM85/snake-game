@@ -467,9 +467,7 @@ export default function SnakeGame() {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
         e.preventDefault();
-        if (!startedRef.current || !aliveRef.current) return;
-        pausedRef.current = !pausedRef.current;
-        setPaused((p) => !p);
+        togglePause();
         return;
       }
       const d = MAP[e.key];
@@ -484,7 +482,7 @@ export default function SnakeGame() {
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [reset, playTurn]);
+  }, [reset, playTurn, togglePause]);
 
   // touch
   const onTouchStart = (e: React.TouchEvent) => {
@@ -511,6 +509,12 @@ export default function SnakeGame() {
       playTurn();
     }
   };
+
+  const togglePause = useCallback(() => {
+    if (!startedRef.current || !aliveRef.current) return;
+    pausedRef.current = !pausedRef.current;
+    setPaused((p) => !p);
+  }, []);
 
   // D-pad button handler
   const press = (d: Dir) => {
@@ -555,7 +559,7 @@ export default function SnakeGame() {
           </div>
         )}
         {paused && !dead && (
-          <div className="overlay" onClick={() => { pausedRef.current = false; setPaused(false); }}>
+          <div className="overlay" onClick={togglePause}>
             <p className="pause-title">Paused</p>
             <p className="sub">Press ESC or tap to resume</p>
           </div>
@@ -574,6 +578,9 @@ export default function SnakeGame() {
         <button className="dpad-btn up"    onClick={() => press('UP')}>▲</button>
         <div className="dpad-row">
           <button className="dpad-btn left"  onClick={() => press('LEFT')}>◀</button>
+          <button className="dpad-btn pause-center" onClick={togglePause}>
+            {paused ? '▶' : '⏸'}
+          </button>
           <button className="dpad-btn right" onClick={() => press('RIGHT')}>▶</button>
         </div>
         <button className="dpad-btn down"  onClick={() => press('DOWN')}>▼</button>

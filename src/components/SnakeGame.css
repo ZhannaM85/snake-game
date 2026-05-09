@@ -158,7 +158,8 @@
 
 .dpad-row {
   display: flex;
-  gap: 48px;
+  align-items: center;
+  gap: 8px;
 }
 
 .dpad-btn {
@@ -180,6 +181,19 @@
 .dpad-btn:active {
   background: #27ae60;
   transform: scale(0.93);
+}
+
+.dpad-btn.pause-center {
+  width: 40px;
+  height: 40px;
+  font-size: 1rem;
+  border-color: #fdcb6e;
+  color: #fdcb6e;
+  border-radius: 50%;
+}
+.dpad-btn.pause-center:active {
+  background: #fdcb6e;
+  color: #000;
 }
 
 /* Hide D-pad on larger screens where keyboard is available */
