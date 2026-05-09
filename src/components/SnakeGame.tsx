@@ -106,7 +106,7 @@ export default function SnakeGame() {
     );
     ctx.fill();
 
-    // snake
+    // snake body
     const snake = snakeRef.current;
     snake.forEach((seg, i) => {
       const isHead = i === 0;
@@ -118,10 +118,78 @@ export default function SnakeGame() {
         seg.y * CELL + padding,
         CELL - padding * 2,
         CELL - padding * 2,
-        isHead ? 5 : 3
+        isHead ? 6 : 3
       );
       ctx.fill();
     });
+
+    // face on head
+    if (snake.length > 0) {
+      const h = snake[0];
+      const hx = h.x * CELL;
+      const hy = h.y * CELL;
+      const dir = dirRef.current;
+
+      // tongue — sticks out from the front edge
+      const stemLen  = CELL * 0.42;
+      const forkLen  = CELL * 0.22;
+      const forkSpread = CELL * 0.16;
+      // base of tongue (center of front edge)
+      const tb = {
+        RIGHT: { x: hx + CELL,     y: hy + CELL / 2, dx: 1,  dy: 0  },
+        LEFT:  { x: hx,            y: hy + CELL / 2, dx: -1, dy: 0  },
+        UP:    { x: hx + CELL / 2, y: hy,            dx: 0,  dy: -1 },
+        DOWN:  { x: hx + CELL / 2, y: hy + CELL,     dx: 0,  dy: 1  },
+      }[dir];
+      const midX = tb.x + tb.dx * stemLen;
+      const midY = tb.y + tb.dy * stemLen;
+      ctx.strokeStyle = '#e74c3c';
+      ctx.lineWidth = 2;
+      ctx.lineCap = 'round';
+      ctx.beginPath();
+      ctx.moveTo(tb.x, tb.y);
+      ctx.lineTo(midX, midY);
+      ctx.stroke();
+      // fork tips (perpendicular spread)
+      const px = tb.dy;   // perp x = dy of direction
+      const py = tb.dx;   // perp y = dx of direction
+      ctx.beginPath();
+      ctx.moveTo(midX, midY);
+      ctx.lineTo(midX + tb.dx * forkLen + px * forkSpread, midY + tb.dy * forkLen + py * forkSpread);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(midX, midY);
+      ctx.lineTo(midX + tb.dx * forkLen - px * forkSpread, midY + tb.dy * forkLen - py * forkSpread);
+      ctx.stroke();
+
+      // eyes — two white circles with dark pupils, near the front of the head
+      const eyeR   = CELL * 0.135;
+      const pupilR = eyeR * 0.55;
+      const eyeOffset = CELL * 0.22;
+      const eyeSpread = CELL * 0.22;
+      const eyePairs: Record<Dir, [number, number, number, number][]> = {
+        RIGHT: [[hx + CELL - eyeOffset * 2, hy + CELL / 2 - eyeSpread, 1, 0],
+                [hx + CELL - eyeOffset * 2, hy + CELL / 2 + eyeSpread, 1, 0]],
+        LEFT:  [[hx + eyeOffset * 2,        hy + CELL / 2 - eyeSpread, -1, 0],
+                [hx + eyeOffset * 2,        hy + CELL / 2 + eyeSpread, -1, 0]],
+        UP:    [[hx + CELL / 2 - eyeSpread, hy + eyeOffset * 2,        0, -1],
+                [hx + CELL / 2 + eyeSpread, hy + eyeOffset * 2,        0, -1]],
+        DOWN:  [[hx + CELL / 2 - eyeSpread, hy + CELL - eyeOffset * 2, 0, 1],
+                [hx + CELL / 2 + eyeSpread, hy + CELL - eyeOffset * 2, 0, 1]],
+      };
+      eyePairs[dir].forEach(([cx, cy, pdx, pdy]) => {
+        // white
+        ctx.fillStyle = '#fff';
+        ctx.beginPath();
+        ctx.arc(cx, cy, eyeR, 0, Math.PI * 2);
+        ctx.fill();
+        // pupil (shifted toward front)
+        ctx.fillStyle = '#1a1a2e';
+        ctx.beginPath();
+        ctx.arc(cx + pdx * eyeR * 0.35, cy + pdy * eyeR * 0.35, pupilR, 0, Math.PI * 2);
+        ctx.fill();
+      });
+    }
   }, []);
 
   // game tick
