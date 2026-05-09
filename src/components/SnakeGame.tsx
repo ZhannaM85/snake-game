@@ -15,16 +15,173 @@ const SPEEDS: Record<SpeedKey, { label: string; ms: number }> = {
 
 type Dir = 'UP' | 'DOWN' | 'LEFT' | 'RIGHT';
 type Point = { x: number; y: number };
+type FruitType = 'apple' | 'orange' | 'strawberry' | 'grape' | 'watermelon' | 'lemon';
+type Food = Point & { fruit: FruitType };
 
-function randomFood(snake: Point[]): Point {
-  let food: Point;
+const FRUITS: FruitType[] = ['apple', 'orange', 'strawberry', 'grape', 'watermelon', 'lemon'];
+
+function randomFood(snake: Point[]): Food {
+  let pos: Point;
   do {
-    food = {
-      x: Math.floor(Math.random() * COLS),
-      y: Math.floor(Math.random() * ROWS),
-    };
-  } while (snake.some((s) => s.x === food.x && s.y === food.y));
-  return food;
+    pos = { x: Math.floor(Math.random() * COLS), y: Math.floor(Math.random() * ROWS) };
+  } while (snake.some((s) => s.x === pos.x && s.y === pos.y));
+  return { ...pos, fruit: FRUITS[Math.floor(Math.random() * FRUITS.length)] };
+}
+
+// ── fruit drawing helpers ────────────────────────────────────────────────────
+
+function shine(ctx: CanvasRenderingContext2D, cx: number, cy: number, r: number) {
+  ctx.fillStyle = 'rgba(255,255,255,0.32)';
+  ctx.beginPath();
+  ctx.ellipse(cx - r * 0.28, cy - r * 0.28, r * 0.28, r * 0.17, -Math.PI / 4, 0, Math.PI * 2);
+  ctx.fill();
+}
+
+function stem(ctx: CanvasRenderingContext2D, cx: number, topY: number) {
+  ctx.strokeStyle = '#6d4c41';
+  ctx.lineWidth = Math.max(1.5, CELL * 0.055);
+  ctx.lineCap = 'round';
+  ctx.beginPath();
+  ctx.moveTo(cx + CELL * 0.04, topY);
+  ctx.quadraticCurveTo(cx + CELL * 0.15, topY - CELL * 0.18, cx + CELL * 0.12, topY - CELL * 0.26);
+  ctx.stroke();
+  // leaf
+  const lx = cx + CELL * 0.12, ly = topY - CELL * 0.14;
+  ctx.fillStyle = '#27ae60';
+  ctx.beginPath();
+  ctx.moveTo(lx, ly);
+  ctx.bezierCurveTo(lx + CELL * 0.22, ly - CELL * 0.2, lx + CELL * 0.3, ly + CELL * 0.08, lx, ly + CELL * 0.05);
+  ctx.fill();
+}
+
+function drawApple(ctx: CanvasRenderingContext2D, cx: number, cy: number, r: number) {
+  const g = ctx.createRadialGradient(cx - r * 0.28, cy - r * 0.28, r * 0.08, cx, cy, r);
+  g.addColorStop(0, '#ff7675'); g.addColorStop(0.55, '#e74c3c'); g.addColorStop(1, '#922b21');
+  ctx.fillStyle = g;
+  ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2); ctx.fill();
+  shine(ctx, cx, cy, r);
+  stem(ctx, cx, cy - r + 1);
+}
+
+function drawOrange(ctx: CanvasRenderingContext2D, cx: number, cy: number, r: number) {
+  const g = ctx.createRadialGradient(cx - r * 0.28, cy - r * 0.28, r * 0.08, cx, cy, r);
+  g.addColorStop(0, '#ffeaa7'); g.addColorStop(0.4, '#fdcb6e'); g.addColorStop(1, '#e17055');
+  ctx.fillStyle = g;
+  ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2); ctx.fill();
+  shine(ctx, cx, cy, r);
+  // navel dot at bottom
+  ctx.fillStyle = 'rgba(0,0,0,0.15)';
+  ctx.beginPath(); ctx.arc(cx, cy + r * 0.72, r * 0.14, 0, Math.PI * 2); ctx.fill();
+  stem(ctx, cx, cy - r + 1);
+}
+
+function drawStrawberry(ctx: CanvasRenderingContext2D, cx: number, cy: number, r: number) {
+  // body — teardrop path
+  const g = ctx.createRadialGradient(cx - r * 0.2, cy - r * 0.1, r * 0.1, cx, cy, r);
+  g.addColorStop(0, '#ff7675'); g.addColorStop(0.6, '#e74c3c'); g.addColorStop(1, '#922b21');
+  ctx.fillStyle = g;
+  ctx.beginPath();
+  ctx.moveTo(cx, cy + r);                                            // bottom tip
+  ctx.bezierCurveTo(cx - r * 1.0, cy + r * 0.3, cx - r * 1.0, cy - r * 0.5, cx, cy - r * 0.55);
+  ctx.bezierCurveTo(cx + r * 1.0, cy - r * 0.5, cx + r * 1.0, cy + r * 0.3, cx, cy + r);
+  ctx.fill();
+  // seeds — tiny yellow-white dots
+  const seeds: [number, number][] = [
+    [-0.3, -0.25], [0.2, -0.35], [-0.1, 0.05], [0.35, 0.1],
+    [-0.35, 0.25], [0.1, 0.4],   [-0.05, -0.6],
+  ];
+  ctx.fillStyle = 'rgba(255,255,180,0.9)';
+  for (const [sx, sy] of seeds) {
+    ctx.beginPath();
+    ctx.ellipse(cx + sx * r, cy + sy * r, r * 0.09, r * 0.13, 0.3, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  // crown leaves
+  ctx.fillStyle = '#27ae60';
+  for (let i = -2; i <= 2; i++) {
+    ctx.beginPath();
+    ctx.moveTo(cx, cy - r * 0.52);
+    ctx.bezierCurveTo(
+      cx + i * r * 0.35, cy - r * 1.05,
+      cx + i * r * 0.45, cy - r * 0.9,
+      cx + i * r * 0.2, cy - r * 0.55,
+    );
+    ctx.fill();
+  }
+}
+
+function drawGrape(ctx: CanvasRenderingContext2D, cx: number, cy: number, r: number) {
+  const g = ctx.createRadialGradient(cx - r * 0.3, cy - r * 0.3, r * 0.08, cx, cy, r);
+  g.addColorStop(0, '#a29bfe'); g.addColorStop(0.5, '#6c5ce7'); g.addColorStop(1, '#4834d4');
+  ctx.fillStyle = g;
+  ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2); ctx.fill();
+  shine(ctx, cx, cy, r);
+  // tiny stem nub
+  ctx.strokeStyle = '#6d4c41';
+  ctx.lineWidth = Math.max(1.5, CELL * 0.05);
+  ctx.lineCap = 'round';
+  ctx.beginPath();
+  ctx.moveTo(cx, cy - r);
+  ctx.lineTo(cx, cy - r - CELL * 0.18);
+  ctx.stroke();
+}
+
+function drawWatermelon(ctx: CanvasRenderingContext2D, cx: number, cy: number, r: number) {
+  // green rind
+  ctx.fillStyle = '#27ae60';
+  ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2); ctx.fill();
+  // white layer
+  ctx.fillStyle = '#ecf0f1';
+  ctx.beginPath(); ctx.arc(cx, cy, r * 0.82, 0, Math.PI * 2); ctx.fill();
+  // red flesh
+  const g = ctx.createRadialGradient(cx - r * 0.2, cy - r * 0.2, r * 0.05, cx, cy, r * 0.82);
+  g.addColorStop(0, '#ff7675'); g.addColorStop(1, '#d63031');
+  ctx.fillStyle = g;
+  ctx.beginPath(); ctx.arc(cx, cy, r * 0.72, 0, Math.PI * 2); ctx.fill();
+  // seeds
+  ctx.fillStyle = '#2d3436';
+  const seeds: [number, number, number][] = [
+    [-0.22, -0.18, 0.4], [0.25, -0.1, -0.3], [-0.05, 0.3, 0.1],
+    [0.3, 0.28, 0.5],    [-0.3, 0.25, -0.5],
+  ];
+  for (const [sx, sy, angle] of seeds) {
+    ctx.beginPath();
+    ctx.ellipse(cx + sx * r, cy + sy * r, r * 0.08, r * 0.14, angle, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  shine(ctx, cx, cy, r);
+}
+
+function drawLemon(ctx: CanvasRenderingContext2D, cx: number, cy: number, r: number) {
+  const g = ctx.createRadialGradient(cx - r * 0.25, cy - r * 0.25, r * 0.05, cx, cy, r);
+  g.addColorStop(0, '#ffeaa7'); g.addColorStop(0.5, '#fdcb6e'); g.addColorStop(1, '#f9a825');
+  ctx.fillStyle = g;
+  // oval body
+  ctx.beginPath();
+  ctx.ellipse(cx, cy, r * 1.1, r * 0.78, 0, 0, Math.PI * 2);
+  ctx.fill();
+  // pointed tips
+  ctx.fillStyle = '#f9a825';
+  for (const side of [-1, 1]) {
+    ctx.beginPath();
+    ctx.ellipse(cx + side * r * 1.0, cy, r * 0.18, r * 0.22, 0, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  shine(ctx, cx, cy, r * 0.9);
+}
+
+function drawFruit(ctx: CanvasRenderingContext2D, food: Food) {
+  const cx = food.x * CELL + CELL / 2;
+  const cy = food.y * CELL + CELL / 2 + CELL * 0.05;
+  const r  = CELL / 2 - CELL * 0.08;
+  switch (food.fruit) {
+    case 'apple':       drawApple(ctx, cx, cy, r);       break;
+    case 'orange':      drawOrange(ctx, cx, cy, r);      break;
+    case 'strawberry':  drawStrawberry(ctx, cx, cy, r);  break;
+    case 'grape':       drawGrape(ctx, cx, cy, r);       break;
+    case 'watermelon':  drawWatermelon(ctx, cx, cy, r);  break;
+    case 'lemon':       drawLemon(ctx, cx, cy, r);       break;
+  }
 }
 
 function move(head: Point, dir: Dir): Point {
@@ -46,7 +203,7 @@ export default function SnakeGame() {
   const snakeRef  = useRef<Point[]>([{ x: 10, y: 10 }]);
   const dirRef    = useRef<Dir>('RIGHT');
   const nextRef   = useRef<Dir>('RIGHT');
-  const foodRef   = useRef<Point>(randomFood(snakeRef.current));
+  const foodRef   = useRef<Food>(randomFood(snakeRef.current));
   const scoreRef  = useRef(0);
   const aliveRef  = useRef(true);
   const startedRef = useRef(false);
@@ -149,48 +306,8 @@ export default function SnakeGame() {
       ctx.beginPath(); ctx.moveTo(0, r * CELL); ctx.lineTo(W, r * CELL); ctx.stroke();
     }
 
-    // food — apple
-    const f  = foodRef.current;
-    const cx = f.x * CELL + CELL / 2;
-    const cy = f.y * CELL + CELL / 2 + CELL * 0.05; // slightly lower to leave room for stem
-    const r  = CELL / 2 - CELL * 0.08;
-
-    // body with radial gradient for 3-D look
-    const grad = ctx.createRadialGradient(
-      cx - r * 0.28, cy - r * 0.28, r * 0.08,
-      cx, cy, r,
-    );
-    grad.addColorStop(0,   '#ff7675');
-    grad.addColorStop(0.55, '#e74c3c');
-    grad.addColorStop(1,   '#922b21');
-    ctx.fillStyle = grad;
-    ctx.beginPath();
-    ctx.arc(cx, cy, r, 0, Math.PI * 2);
-    ctx.fill();
-
-    // shine highlight
-    ctx.fillStyle = 'rgba(255,255,255,0.32)';
-    ctx.beginPath();
-    ctx.ellipse(cx - r * 0.28, cy - r * 0.28, r * 0.28, r * 0.17, -Math.PI / 4, 0, Math.PI * 2);
-    ctx.fill();
-
-    // stem
-    ctx.strokeStyle = '#6d4c41';
-    ctx.lineWidth = Math.max(1.5, CELL * 0.055);
-    ctx.lineCap = 'round';
-    ctx.beginPath();
-    ctx.moveTo(cx + CELL * 0.04, cy - r + 1);
-    ctx.quadraticCurveTo(cx + CELL * 0.15, cy - r - CELL * 0.18, cx + CELL * 0.12, cy - r - CELL * 0.26);
-    ctx.stroke();
-
-    // leaf
-    const lx = cx + CELL * 0.12;
-    const ly = cy - r - CELL * 0.14;
-    ctx.fillStyle = '#27ae60';
-    ctx.beginPath();
-    ctx.moveTo(lx, ly);
-    ctx.bezierCurveTo(lx + CELL * 0.22, ly - CELL * 0.2, lx + CELL * 0.3, ly + CELL * 0.08, lx, ly + CELL * 0.05);
-    ctx.fill();
+    // food
+    drawFruit(ctx, foodRef.current);
 
     // snake body
     const snake = snakeRef.current;
