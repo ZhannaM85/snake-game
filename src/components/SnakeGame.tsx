@@ -284,6 +284,66 @@ export default function SnakeGame() {
     });
   }, []);
 
+  // turbo music
+  const turboTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const turboStepRef  = useRef(0);
+  // deliberately dissonant sequence: jumps between clashing semitones
+  const TURBO_SEQ = [262, 277, 523, 185, 440, 466, 196, 554, 330, 622, 311, 698, 208, 587, 415, 233];
+
+  const stopTurboMusic = useCallback(() => {
+    if (turboTimerRef.current !== null) {
+      clearTimeout(turboTimerRef.current);
+      turboTimerRef.current = null;
+    }
+  }, []);
+
+  const startTurboMusic = useCallback(() => {
+    stopTurboMusic();
+    if (!audioCtxRef.current) audioCtxRef.current = new AudioContext();
+
+    const tick = () => {
+      const ac = audioCtxRef.current;
+      if (!ac) return;
+
+      const step = turboStepRef.current++;
+      const freq  = TURBO_SEQ[step % TURBO_SEQ.length];
+      const squeal = Math.random() < 0.18;      // occasional high squeal
+      const dual   = Math.random() < 0.3;       // sometimes two notes at once
+
+      const play = (f: number, vol: number, dur: number) => {
+        const osc  = ac.createOscillator();
+        const gain = ac.createGain();
+        osc.connect(gain);
+        gain.connect(ac.destination);
+        osc.type = 'square';
+        osc.frequency.setValueAtTime(squeal ? f * 4 : f, ac.currentTime);
+        if (squeal) osc.frequency.exponentialRampToValueAtTime(f * 2, ac.currentTime + dur);
+        gain.gain.setValueAtTime(vol, ac.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, ac.currentTime + dur);
+        osc.start(ac.currentTime);
+        osc.stop(ac.currentTime + dur);
+      };
+
+      play(freq, 0.07, 0.11);
+      if (dual) play(TURBO_SEQ[(step + 5) % TURBO_SEQ.length], 0.05, 0.09);
+
+      // random interval 80–160 ms for chaotic rhythm
+      const next = 80 + Math.floor(Math.random() * 80);
+      turboTimerRef.current = setTimeout(tick, next);
+    };
+
+    tick();
+  }, [stopTurboMusic]);  // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    if (speed === 'turbo' && started && !dead && !paused) {
+      startTurboMusic();
+    } else {
+      stopTurboMusic();
+    }
+    return stopTurboMusic;
+  }, [speed, started, dead, paused, startTurboMusic, stopTurboMusic]);
+
   const reset = useCallback(() => {
     snakeRef.current  = [{ x: 10, y: 10 }];
     dirRef.current    = 'RIGHT';
