@@ -93,6 +93,27 @@ export default function SnakeGame() {
     osc.stop(ac.currentTime + 0.18);
   }, []);
 
+  const playGameOver = useCallback(() => {
+    if (!audioCtxRef.current) audioCtxRef.current = new AudioContext();
+    const ac = audioCtxRef.current;
+    // three descending notes
+    const notes = [330, 220, 110];
+    notes.forEach((freq, i) => {
+      const osc = ac.createOscillator();
+      const gain = ac.createGain();
+      osc.connect(gain);
+      gain.connect(ac.destination);
+      osc.type = 'sawtooth';
+      const t = ac.currentTime + i * 0.18;
+      osc.frequency.setValueAtTime(freq, t);
+      osc.frequency.exponentialRampToValueAtTime(freq * 0.5, t + 0.15);
+      gain.gain.setValueAtTime(0.2, t);
+      gain.gain.exponentialRampToValueAtTime(0.001, t + 0.18);
+      osc.start(t);
+      osc.stop(t + 0.18);
+    });
+  }, []);
+
   const reset = useCallback(() => {
     snakeRef.current  = [{ x: 10, y: 10 }];
     dirRef.current    = 'RIGHT';
@@ -237,12 +258,14 @@ export default function SnakeGame() {
     if (head.x < 0 || head.x >= COLS || head.y < 0 || head.y >= ROWS) {
       aliveRef.current = false;
       setDead(true);
+      playGameOver();
       return;
     }
     // self collision
     if (snakeRef.current.some((s) => s.x === head.x && s.y === head.y)) {
       aliveRef.current = false;
       setDead(true);
+      playGameOver();
       return;
     }
 
@@ -260,7 +283,7 @@ export default function SnakeGame() {
     }
 
     draw();
-  }, [draw, playEat]);
+  }, [draw, playEat, playGameOver]);
 
   // game loop — restarts whenever speed changes
   useEffect(() => {
