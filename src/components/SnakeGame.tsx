@@ -149,16 +149,47 @@ export default function SnakeGame() {
       ctx.beginPath(); ctx.moveTo(0, r * CELL); ctx.lineTo(W, r * CELL); ctx.stroke();
     }
 
-    // food
-    const f = foodRef.current;
-    ctx.fillStyle = '#e74c3c';
-    ctx.beginPath();
-    ctx.arc(
-      f.x * CELL + CELL / 2,
-      f.y * CELL + CELL / 2,
-      CELL / 2 - 2,
-      0, Math.PI * 2
+    // food — apple
+    const f  = foodRef.current;
+    const cx = f.x * CELL + CELL / 2;
+    const cy = f.y * CELL + CELL / 2 + CELL * 0.05; // slightly lower to leave room for stem
+    const r  = CELL / 2 - CELL * 0.08;
+
+    // body with radial gradient for 3-D look
+    const grad = ctx.createRadialGradient(
+      cx - r * 0.28, cy - r * 0.28, r * 0.08,
+      cx, cy, r,
     );
+    grad.addColorStop(0,   '#ff7675');
+    grad.addColorStop(0.55, '#e74c3c');
+    grad.addColorStop(1,   '#922b21');
+    ctx.fillStyle = grad;
+    ctx.beginPath();
+    ctx.arc(cx, cy, r, 0, Math.PI * 2);
+    ctx.fill();
+
+    // shine highlight
+    ctx.fillStyle = 'rgba(255,255,255,0.32)';
+    ctx.beginPath();
+    ctx.ellipse(cx - r * 0.28, cy - r * 0.28, r * 0.28, r * 0.17, -Math.PI / 4, 0, Math.PI * 2);
+    ctx.fill();
+
+    // stem
+    ctx.strokeStyle = '#6d4c41';
+    ctx.lineWidth = Math.max(1.5, CELL * 0.055);
+    ctx.lineCap = 'round';
+    ctx.beginPath();
+    ctx.moveTo(cx + CELL * 0.04, cy - r + 1);
+    ctx.quadraticCurveTo(cx + CELL * 0.15, cy - r - CELL * 0.18, cx + CELL * 0.12, cy - r - CELL * 0.26);
+    ctx.stroke();
+
+    // leaf
+    const lx = cx + CELL * 0.12;
+    const ly = cy - r - CELL * 0.14;
+    ctx.fillStyle = '#27ae60';
+    ctx.beginPath();
+    ctx.moveTo(lx, ly);
+    ctx.bezierCurveTo(lx + CELL * 0.22, ly - CELL * 0.2, lx + CELL * 0.3, ly + CELL * 0.08, lx, ly + CELL * 0.05);
     ctx.fill();
 
     // snake body
