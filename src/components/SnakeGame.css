@@ -196,6 +196,13 @@
   color: #000;
 }
 
+.game-footer {
+  margin-top: auto;
+  padding: 16px 0 8px;
+  font-size: 0.85rem;
+  color: #555;
+}
+
 /* Hide D-pad on larger screens where keyboard is available */
 @media (hover: hover) and (pointer: fine) {
   .dpad {

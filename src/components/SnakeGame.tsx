@@ -645,6 +645,8 @@ export default function SnakeGame() {
         </div>
         <button className="dpad-btn down"  onClick={() => press('DOWN')}>▼</button>
       </div>
+
+      <footer className="game-footer">Made by Kirill Toreev 😊</footer>
     </div>
   );
 }
