@@ -2,8 +2,13 @@
   box-sizing: border-box;
 }
 
-body {
+html, body {
   margin: 0;
+  overflow: hidden;
+  height: 100%;
+}
+
+body {
   background: #1a1a2e;
   overscroll-behavior: none;
 }
